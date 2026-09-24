@@ -1,13 +1,15 @@
-;;; -*- lexical-binding: t; -*-
+;;; macs-terminals.el --- Configures vterm and sets up 3 terminal windows. - -*- lexical-binding: t; -*-
+;;; Commentary:
+;;; Sets up 3 terminal types:
+;;; - Floating
+;;; - Vertical
+;;; - Horizontal
+;;; And binds under C-c t
+;;;
+;;; Code:
 
-                                        ; === === === === === === ;
-                                        ;     macs terminals      ;
-                                        ;                         ;
-                                        ;      Floating,          ;
-                                        ;      Vertical, and      ;
-                                        ;      Horizontal.        ;
-                                        ;                         ;
-                                        ; === === === === === === ;
+(require 'vterm)
+(require 'catppuccin-theme)
 
 (setenv "COLORTERM" "truecolor")
 (setq vterm-max-scrollback 100000
@@ -119,3 +121,4 @@
 (repeat-mode 1)
 
 (provide 'macs-terminals)
+;;; macs-terminals.el ends here.

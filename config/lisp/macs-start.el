@@ -1,18 +1,15 @@
-;;; -*- lexical-binding: t; -*-
+;;; macs-start.el --- Dashboard config / implementation - -*- lexical-binding: t; -*-
+;;; Commentary:
+;;; Sets up the macs's start dashboard, such as projects, and overall layout.
+;;;
+;;; Code:
 
-                                        ; === === === === === === ;
-                                        ;        macs start       ;
-                                        ;                         ;
-                                        ;       Start-screen      ;
-                                        ;       specifics.        ;
-                                        ;                         ;
-                                        ; === === === === === === ;
-
-
+(require 'treemacs)
+(require 'project)
 
 ;;; Start screen
 (defgroup macs nil
-  "macs start screen."
+  "Macs start screen."
   :group 'emacs)
 
 (defcustom macs-project-roots
@@ -22,7 +19,7 @@
                             "~/dev" "~/repos" "~/git")))
       (list (expand-file-name "~/projects")))
   "Directories scanned for projects by the macs start screen.
-  Set this to your projects directory, e.g. (list \"~/work\")."
+Set this to your projects directory, e.g. (list \"~/work\")."
   :type '(repeat directory)
   :group 'macs)
 
@@ -48,11 +45,18 @@
   :group 'macs)
 
 (defun macs-open-project (dir)
-  "Make DIR the active project and open the explorer on it."
+  "Make DIR the active project and open the explorer on it, expanded."
   (setq default-directory (file-name-as-directory dir))
-  (treemacs-add-and-display-current-project-exclusively))
+  (treemacs-add-and-display-current-project-exclusively)
+  (when-let* ((buf (treemacs-get-local-buffer)))
+    (with-current-buffer buf
+      (goto-char (point-min))
+      (when-let* ((btn (treemacs-current-button)))
+        (unless (treemacs-is-node-expanded? btn)
+          (treemacs--expand-root-node btn))))))
 
 (defun macs-start--rows (projects)
+  "Calculates the starting rows from PROJECTS."
   (mapcar (lambda (d)
             (let ((path (directory-file-name d)))
               (list (file-name-nondirectory path)
@@ -111,6 +115,7 @@
       (macs-start-refresh))))
 
 (defun macs-start-refresh ()
+  "Refreshes the macs dashboard, recentering and refetching new projects."
   (interactive)
   (let* ((inhibit-read-only t)
          (all (macs-start--ranked-projects))
@@ -126,17 +131,14 @@
          (row-widths (mapcar (lambda (r) (+ (length (nth 0 r)) 2 (length (nth 1 r))))
                              rows))
          (banner-width (apply #'max (mapcar #'length macs-start-banner)))
+         (win (get-buffer-window (current-buffer)))
+         (win-width (if win (window-width win) (window-width)))
          (width (apply #'max (max banner-width (length sub) (length hint))
                        row-widths))
-         (margin (make-string (max 0 (/ (- (window-width) width) 2)) ?\s)))
+         (margin (make-string (max 0 (/ (- win-width width) 2)) ?\s)))
     (erase-buffer)
     (dolist (line macs-start-banner)
-      (insert (propertize " " 'display
-                          `(space :align-to
-                                  (- center ,(list (/ (string-pixel-width
-                                                       (propertize line 'face 'macs-title))
-                                                      2)))))
-              (propertize (concat line "\n") 'face 'macs-title)))
+      (insert margin (propertize (concat line "\n") 'face 'macs-title)))
     (insert "\n" margin (propertize (concat sub "\n\n") 'face 'macs-dim))
     (if rows
         (dolist (row rows)
@@ -154,8 +156,7 @@
                                   (mapconcat #'abbreviate-file-name macs-project-roots ", "))
                           'face 'macs-dim)))
     (insert "\n" margin (propertize (concat hint "\n") 'face 'macs-dim))
-    (let* ((win (get-buffer-window (current-buffer)))
-           (height (if win (window-body-height win) (window-body-height)))
+    (let* ((height (if win (window-body-height win) (window-body-height)))
            (lines (count-lines (point-min) (point-max)))
            (pad (max 0 (/ (- height lines) 2))))
       (goto-char (point-min))
@@ -164,6 +165,7 @@
         (when btn (goto-char (button-start btn)))))))
 
 (defun macs-start--window-size-changed (frame)
+  "Runs when `'window-size`' is changed and FRAME is *macs*."
   (let ((win (get-buffer-window "*macs*" frame)))
     (when win
       (with-current-buffer "*macs*"
@@ -203,3 +205,4 @@
 (setq initial-buffer-choice #'macs-start)
 
 (provide 'macs-start)
+;;; macs-start.el ends here.

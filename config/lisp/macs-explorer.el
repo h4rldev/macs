@@ -1,11 +1,12 @@
-;;; -*- lexical-binding: t; -*-
+;;; macs-explorer.el --- Treemacs setup. - -*- lexical-binding: t; -*-
+;;; Commentary:
+;;; Sets up treemac's defaults,
+;;; and enables a few features.
+;;;
+;;; Code:
 
-                                        ; === === === === === === ;
-                                        ;      macs explorer      ;
-                                        ;                         ;
-                                        ;        Treemacs         ;
-                                        ;                         ;
-                                        ; === === === === === === ;
+(require 'treemacs)
+(require 'treemacs-nerd-icons)
 
 (setq treemacs-width 30
       treemacs-position 'left
@@ -20,6 +21,7 @@
 (global-set-key (kbd "C-c E") #'treemacs-select-window)
 
 (add-hook 'treemacs-post-buffer-init-hook
-          (lambda (_) (display-line-numbers-mode -1)))
+          (lambda () (display-line-numbers-mode -1)))
 
 (provide 'macs-explorer)
+;;; macs-explorer.el ends here

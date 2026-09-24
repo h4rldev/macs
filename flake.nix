@@ -21,6 +21,9 @@
     mkMacs = pkgs: {
       config ? null,
       appendConfig ? null,
+      packages ? null,
+      appendPackages ? [],
+      discord ? false,
     }: let
       macs-pkgs = pkgs.extend emacs-overlay.overlays.default;
       isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
@@ -113,10 +116,7 @@
       '';
 
       macs-epkgs = macs-pkgs.emacsPackagesFor emacs-minimal;
-      macs = macs-epkgs.withPackages (_: [
-        emacs-config
-
-        # Melpa packages
+      defaultPackages = [
         macs-epkgs.magit
         macs-epkgs.vterm
         macs-epkgs.corfu
@@ -127,20 +127,34 @@
         macs-epkgs.catppuccin-theme
         macs-epkgs.cape
         macs-epkgs.yasnippet
+        macs-epkgs.yasnippet-snippets
         macs-epkgs.apheleia
         macs-epkgs.consult
         macs-epkgs.embark
+        macs-epkgs.embark-consult
         macs-epkgs.zoxide
         macs-epkgs.treemacs
         macs-epkgs.treemacs-nerd-icons
         macs-epkgs.nerd-icons
         macs-epkgs.nerd-icons-completion
         macs-epkgs.nerd-icons-dired
+        macs-epkgs.nix-ts-mode
 
         pkgs.zoxide
         pkgs.ripgrep
         pkgs.fd
-      ]);
+        pkgs.wl-clipboard
+      ];
+
+      macs = macs-epkgs.withPackages (_:
+        [emacs-config]
+        ++ (
+          if packages == null
+          then defaultPackages
+          else packages
+        )
+        ++ lib.optional discord macs-epkgs.elcord
+        ++ appendPackages);
     in
       macs;
 
@@ -194,12 +208,30 @@
             avoid a white flash. Paths are symlinked (live); strings are baked.
           '';
         };
+
+        packages = lib.mkOption {
+          type = lib.types.nullOr (lib.types.listOf lib.types.package);
+          default = null;
+          description = ''
+            Replace macs' default package list. Null keeps the built-in set
+            (magit, vertico, treemacs, ripgrep, fd, ...). `appendPackages` is
+            added on top of whichever list is used.
+          '';
+        };
+
+        appendPackages = lib.mkOption {
+          type = lib.types.listOf lib.types.package;
+          default = [];
+          description = "Extra packages appended to macs' package list.";
+        };
+
+        discord = lib.mkEnableOption "Discord Rich Presence via elcord.";
       };
 
       config = lib.mkIf cfg.enable (
         install {
           package = cfg.package.override {
-            inherit (cfg) config appendConfig;
+            inherit (cfg) config appendConfig packages appendPackages discord;
           };
           inherit earlyInitSource;
         }

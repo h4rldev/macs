@@ -1,14 +1,15 @@
-;;; -*- lexical-binding: t; -*-
+;;; macs-completion.el --- Sets up completions, such as vertico - -*- lexical-binding: t; -*-
+;;; Commentary:
+;;; Sets up vertico, marginalia, cape, and corfu for completions and similar.
+;;;
+;;; Code:
 
-                                        ; === === === === === === ;
-                                        ;     macs completion     ;
-                                        ;                         ;
-                                        ;    Completion stack,    ;
-                                        ;    Keybindings, and     ;
-                                        ;    Which-key.           ;
-                                        ;                         ;
-                                        ; === === === === === === ;
-
+(require 'vertico)
+(require 'marginalia)
+(require 'orderless)
+(require 'consult)
+(require 'embark)
+(require 'zoxide)
 
 (setq completion-styles '(orderless basic)
       completion-category-defaults nil
@@ -20,7 +21,17 @@
 (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 (vertico-mode 1)
 (marginalia-mode 1)
+
+
+(require 'corfu-auto)
+(setq corfu-auto t
+      corfu-auto-delay 0.15
+      corfu-auto-prefix 2)
 (global-corfu-mode 1)
+
+(keymap-unset corfu-map "RET")
+(keymap-unset corfu-map "TAB")
+(keymap-set corfu-map "C-y" #'corfu-insert)
 
 (require 'nerd-icons-completion)
 (nerd-icons-completion-mode 1)
@@ -44,3 +55,4 @@
   (which-key-mode 1))
 
 (provide 'macs-completion)
+;;; macs-completion.el ends here
