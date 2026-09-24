@@ -8,10 +8,10 @@
 (require 'treesit)
 (require 'treesit-auto)
 
-;; Emacs 31 behaviour: open files in their *-ts-mode whenever a grammar
-;; is available, and offer to install it when it isn't.  `setopt' (not
-;; `setq') so the option's :set fills `major-mode-remap-alist'.
-(setopt treesit-enabled-modes t)
+;; treesit-auto owns mode selection: a file opens in its base mode, is
+;; remapped to the *-ts-mode once the grammar is ready, and prompts to
+;; install the grammar when it is missing.
+(setopt treesit-auto-install 'prompt)
 (setopt treesit-auto-install-grammar 'ask)
 
 (global-treesit-auto-mode 1)
