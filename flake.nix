@@ -139,6 +139,7 @@
         macs-epkgs.nerd-icons-completion
         macs-epkgs.nerd-icons-dired
         macs-epkgs.nix-ts-mode
+        macs-epkgs.glsl-mode
         macs-epkgs.treesit-auto
 
         pkgs.zoxide
