@@ -9,8 +9,13 @@
 
 (declare-function elcord-mode "elcord")
 (defvar elcord-use-major-mode-as-main-icon)
+(defvar elcord--editor-name)
+(defvar elcord-client-id)
+
 (when (require 'elcord nil t)
-  (setq elcord-use-major-mode-as-main-icon t)
+  (setq elcord-use-major-mode-as-main-icon t
+        elcord--editor-name "macs"
+        elcord-client-id "1552666524630909029")
   (elcord-mode 1))
 
 (provide 'macs-discord)

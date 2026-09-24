@@ -35,19 +35,30 @@
       (setq-local mode-line-format nil))
     buf))
 
+(defun macs--vterm-close-on-exit (buf _event)
+  "Close the side window showing BUF when its shell exits.
+Floating terminals live in child frames and are handled separately."
+  (let ((win (and buf (get-buffer-window buf))))
+    (when (and win (not (frame-parent (window-frame win))))
+      (delete-window win))))
+
 (defun macs--vterm-toggle (name side)
   "Toggle the NAME terminal in a SIDE window, keeping its buffer alive."
   (let* ((buf (get-buffer name))
          (win (and buf (get-buffer-window buf))))
     (if win
         (delete-window win)
-      (display-buffer (macs--vterm name)
-                      (if (eq side 'below)
-                          `((display-buffer-reuse-window display-buffer-below-selected)
-                            (window-height . 0.3))
-                        `((display-buffer-reuse-window display-buffer-in-side-window)
-                          (side . ,side)
-                          (window-width . 0.4)))))))
+      (select-window
+       (display-buffer
+        (macs--vterm name)
+        (if (eq side 'below)
+            `((display-buffer-reuse-window display-buffer-below-selected)
+              (window-height . 0.3))
+          `((display-buffer-reuse-window display-buffer-in-side-window)
+            (side . ,side)
+            (window-width . 0.4)))))
+      (with-current-buffer (get-buffer name)
+        (add-hook 'vterm-exit-functions #'macs--vterm-close-on-exit nil t)))))
 
 (defun macs-vterm-vertical ()
   "Toggle a terminal on the right, keeping its session."
