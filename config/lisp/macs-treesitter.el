@@ -37,5 +37,9 @@
 
   (add-to-list 'auto-mode-alist '("\\.nix\\'" . macs-nix-ts-mode-maybe)))
 
+;; `glsl-ts-mode' inherits c-ts-mode's "C++" mode-line; relabel it.
+(with-eval-after-load 'glsl-ts-mode
+  (add-hook 'glsl-ts-mode-hook (lambda () (setq-local mode-name "GLSL"))))
+
 (provide 'macs-treesitter)
 ;;; macs-treesitter.el ends here

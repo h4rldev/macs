@@ -31,9 +31,12 @@
     (message "Trusted %s" dir)))
 
 (defun macs-eglot-maybe ()
-  "Run `eglot-ensure' only when a server is known for the mode."
+  "Run `eglot-ensure' for known modes, but not GLSL.
+`glsl-ts-mode' derives from `c-ts-mode', so eglot would otherwise
+attach clangd and flag GLSL as invalid C++."
   (require 'eglot)
-  (when (cdr (eglot--lookup-mode major-mode))
+  (when (and (cdr (eglot--lookup-mode major-mode))
+             (not (eq major-mode 'glsl-ts-mode)))
     (eglot-ensure)))
 
 (add-hook 'prog-mode-hook #'macs-eglot-maybe)
