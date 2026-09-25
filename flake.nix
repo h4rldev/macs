@@ -58,6 +58,7 @@
               "--with-gnutls"
               "--with-zlib"
               "--with-modules"
+              "--with-file-notification=yes"
             ]
             else [
               "--without-all"
@@ -75,6 +76,7 @@
               "--with-zlib"
               "--with-modules"
               "--with-toolkit-scroll-bars"
+              "--with-file-notification=yes"
             ];
 
           env = removeAttrs (old.env or {}) ["NATIVE_FULL_AOT"];

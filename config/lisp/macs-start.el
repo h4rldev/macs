@@ -186,23 +186,25 @@ Set this to your projects directory, e.g. (list \"~/work\")."
   (interactive)
   (setq macs-start-show-all (not macs-start-show-all))
   (macs-start-refresh))
+(define-derived-mode macs-start-mode special-mode "macs"
+  "Major mode for the macs dashboard."
+  (setq-local truncate-lines t)
+  (setq-local display-line-numbers nil)
+  (display-line-numbers-mode -1))
+
+(keymap-set macs-start-mode-map "r" #'macs-start-scan)
+(keymap-set macs-start-mode-map "a" #'macs-start-toggle-all)
+(keymap-set macs-start-mode-map "g" #'macs-start-refresh)
 
 (defun macs-start ()
   "Populate and return the macs start buffer."
   (with-current-buffer (get-buffer-create "*macs*")
-    (special-mode)
-    (setq-local truncate-lines t)
-    (setq-local display-line-numbers nil)
-    (display-line-numbers-mode -1)
-    (local-set-key (kbd "r") #'macs-start-scan)
-    (local-set-key (kbd "a") #'macs-start-toggle-all)
-    (local-set-key (kbd "g") #'macs-start-refresh)
+    (macs-start-mode)
     (if (null (project-known-project-roots))
         (macs-start-scan)
       (macs-start-refresh))
     (current-buffer)))
 
 (setq initial-buffer-choice #'macs-start)
-
 (provide 'macs-start)
 ;;; macs-start.el ends here.
