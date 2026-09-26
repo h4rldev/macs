@@ -18,7 +18,7 @@
   (treemacs-nerd-icons-config))
 
 (global-set-key (kbd "C-c e") #'treemacs)
-(global-set-key (kbd "C-E")   #'treemacs-select-window)
+(global-set-key (kbd "C-S-e")   #'treemacs-select-window)
 
 (add-hook 'treemacs-post-buffer-init-hook
           (lambda () (display-line-numbers-mode -1)))
