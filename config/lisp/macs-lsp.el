@@ -9,7 +9,8 @@
 
 ;;; LSP
 (setq eglot-autoshutdown t
-      eglot-sync-connect 1
+      eglot-sync-connect nil
+      eglot-connect-timeout 60
       eglot-events-buffer-config '(:size 0 :format full)
       flymake-inline-diagnostics 'short)
 
@@ -38,6 +39,7 @@ attach clangd and flag GLSL as invalid C++."
   (when (and (cdr (eglot--lookup-mode major-mode))
              (not (eq major-mode 'glsl-ts-mode)))
     (eglot-ensure)))
+
 
 (add-hook 'prog-mode-hook #'macs-eglot-maybe)
 (with-eval-after-load 'eglot

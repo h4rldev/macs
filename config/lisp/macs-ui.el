@@ -57,10 +57,27 @@
 (savehist-mode 1)
 (global-display-line-numbers-mode 1)
 
+(defun macs-rustfmt-edition ()
+  "Return the Rust edition from the nearest Cargo.toml, or \"2021\"."
+  (let ((root (and buffer-file-name
+                   (locate-dominating-file buffer-file-name "Cargo.toml"))))
+    (or (when root
+          (with-temp-buffer
+            (insert-file-contents (expand-file-name "Cargo.toml" root))
+            (goto-char (point-min))
+            (when (re-search-forward
+                   "^[ \t]*edition[ \t]*=[ \t]*\"\\([^\"]+\\)\"" nil t)
+              (match-string 1))))
+        "2021")))
+
+(setf (alist-get 'rustfmt apheleia-formatters)
+      '("rustfmt" "--quiet" "--emit" "stdout" "--edition" (macs-rustfmt-edition)))
+
+
 (when (find-font (font-spec :family "Maple Mono NF"))
   (set-face-attribute 'default nil :font "Maple Mono NF" :height 105))
 
-(setq display-line-numbers-type 'relative)
+(setq display-line-numbers-type 't)
 
 (defun macs-toggle-relative-line-numbers ()
   "Toggle absolute/relative line numbers in all buffers."

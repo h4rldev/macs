@@ -83,12 +83,14 @@ Set this to your projects directory, e.g. (list \"~/work\")."
 (defun macs-start--project-mtime (root)
   "Newest file modification time (seconds) under ROOT."
   (let ((newest 0))
-    (dolist (file (directory-files-recursively
-                   root "\\`[^.]" nil
-                   (lambda (dir)
-                     (not (member (file-name-nondirectory dir)
-                                  macs-start--skip-dirs)))))
-      (let ((m (file-attribute-modification-time (file-attributes file))))
+    (dolist (file (ignore-errors
+                    (directory-files-recursively
+                     root "\\`[^.]" nil
+                     (lambda (dir)
+                       (not (member (file-name-nondirectory dir)
+                                    macs-start--skip-dirs))))))
+      (let ((m (ignore-errors
+                 (file-attribute-modification-time (file-attributes file)))))
         (when (and m (> (float-time m) newest))
           (setq newest (float-time m)))))
     newest))
@@ -112,11 +114,10 @@ Set this to your projects directory, e.g. (list \"~/work\")."
     (prin1 macs-start--mtime-cache (current-buffer)))
   (when (get-buffer "*macs*")
     (with-current-buffer "*macs*"
-      (macs-start-refresh))))
+      (macs-start--redraw))))
 
-(defun macs-start-refresh ()
+(defun macs-start--redraw ()
   "Refreshes the macs dashboard, recentering and refetching new projects."
-  (interactive)
   (let* ((inhibit-read-only t)
          (all (macs-start--ranked-projects))
          (projects (if macs-start-show-all
@@ -169,7 +170,7 @@ Set this to your projects directory, e.g. (list \"~/work\")."
   (let ((win (get-buffer-window "*macs*" frame)))
     (when win
       (with-current-buffer "*macs*"
-        (macs-start-refresh)))))
+        (macs-start--redraw)))))
 
 (add-hook 'window-size-change-functions #'macs-start--window-size-changed)
 
@@ -179,13 +180,14 @@ Set this to your projects directory, e.g. (list \"~/work\")."
   (dolist (root macs-project-roots)
     (when (file-directory-p root)
       (project-remember-projects-under root)))
-  (macs-start-refresh))
+  (macs-start--redraw))
 
 (defun macs-start-toggle-all ()
   "Toggle between recent projects and every known project."
   (interactive)
   (setq macs-start-show-all (not macs-start-show-all))
-  (macs-start-refresh))
+  (macs-start--redraw))
+
 (define-derived-mode macs-start-mode special-mode "macs"
   "Major mode for the macs dashboard."
   (setq-local truncate-lines t)
@@ -194,7 +196,7 @@ Set this to your projects directory, e.g. (list \"~/work\")."
 
 (keymap-set macs-start-mode-map "r" #'macs-start-scan)
 (keymap-set macs-start-mode-map "a" #'macs-start-toggle-all)
-(keymap-set macs-start-mode-map "g" #'macs-start-refresh)
+(keymap-set macs-start-mode-map "g" #'macs-start--redraw)
 
 (defun macs-start ()
   "Populate and return the macs start buffer."
@@ -202,7 +204,7 @@ Set this to your projects directory, e.g. (list \"~/work\")."
     (macs-start-mode)
     (if (null (project-known-project-roots))
         (macs-start-scan)
-      (macs-start-refresh))
+      (macs-start--redraw))
     (current-buffer)))
 
 (setq initial-buffer-choice #'macs-start)
