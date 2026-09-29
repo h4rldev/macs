@@ -143,6 +143,7 @@
         macs-epkgs.nix-ts-mode
         macs-epkgs.glsl-mode
         macs-epkgs.treesit-auto
+        macs-epkgs.erlang-ts
 
         pkgs.zoxide
         pkgs.ripgrep

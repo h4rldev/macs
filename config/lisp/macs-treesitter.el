@@ -29,7 +29,7 @@
 (when (locate-library "nix-ts-mode")
   (add-to-list 'treesit-language-source-alist
                '(nix "https://github.com/nix-community/tree-sitter-nix"))
-
+  
   (defun macs-nix-ts-mode-maybe ()
     "Use `nix-ts-mode' for Nix files, installing the grammar if needed."
     (when (and (treesit-ensure-installed 'nix)
@@ -43,6 +43,7 @@
   (add-hook 'glsl-ts-mode-hook (lambda () (setq-local mode-name "GLSL"))))
 
 (add-to-list 'major-mode-remap-alist '(mhtml-mode . mhtml-ts-mode))
+(add-to-list 'major-mode-remap-alist '(erlang-mode . erlang-ts-mode))
 
 (provide 'macs-treesitter)
 ;;; macs-treesitter.el ends here
