@@ -43,6 +43,16 @@
   (add-hook 'glsl-ts-mode-hook (lambda () (setq-local mode-name "GLSL"))))
 
 (add-to-list 'major-mode-remap-alist '(mhtml-mode . mhtml-ts-mode))
+
+
+;; erlang-ts' `builtin' and `guards' features hand OTP's Emacs-syntax regexps
+;; to tree-sitter's :match predicate; libtree-sitter 0.26 segfaults on them
+;; during font-lock. Drop just those two features.
+(defun macs-erlang-ts--font-lock-setup ()
+  "Disable erlang-ts features that crash tree-sitter 0.26."
+  (treesit-font-lock-recompute-features nil '(builtin guards)))
+(add-hook 'erlang-ts-mode-hook #'macs-erlang-ts--font-lock-setup)
+
 (add-to-list 'major-mode-remap-alist '(erlang-mode . erlang-ts-mode))
 
 (provide 'macs-treesitter)
