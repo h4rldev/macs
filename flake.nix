@@ -144,6 +144,7 @@
         macs-epkgs.glsl-mode
         macs-epkgs.treesit-auto
         macs-epkgs.erlang-ts
+        macs-epkgs.web-mode
 
         pkgs.zoxide
         pkgs.ripgrep

@@ -7,7 +7,6 @@
 
 (require 'treesit)
 (require 'treesit-auto)
-(require 'mhtml-ts-mode)
 
 ;; treesit-auto owns mode selection: a file opens in its base mode, is
 ;; remapped to the *-ts-mode once the grammar is ready, and prompts to
@@ -41,8 +40,6 @@
 ;; `glsl-ts-mode' inherits c-ts-mode's "C++" mode-line; relabel it.
 (with-eval-after-load 'glsl-ts-mode
   (add-hook 'glsl-ts-mode-hook (lambda () (setq-local mode-name "GLSL"))))
-
-(add-to-list 'major-mode-remap-alist '(mhtml-mode . mhtml-ts-mode))
 
 
 ;; erlang-ts' `builtin' and `guards' features hand OTP's Emacs-syntax regexps

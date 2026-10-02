@@ -24,6 +24,7 @@
 (require 'macs-discord)
 (require 'macs-clipboard)
 (require 'macs-treesitter)
+(require 'macs-web)
 
 (run-with-idle-timer
  0.4 nil
