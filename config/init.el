@@ -25,6 +25,7 @@
 (require 'macs-clipboard)
 (require 'macs-treesitter)
 (require 'macs-web)
+(require 'macs-erlang)
 
 (run-with-idle-timer
  0.4 nil
@@ -34,6 +35,12 @@
    (apheleia-global-mode 1)
    (envrc-global-mode 1)
    (macs-start--recompute-mtimes)))
+
+(keymap-set envrc-mode-map "C-c d" 'envrc-command-map)
+
+;; `.envrc'/`.env' are shell; `.jsonc' is JSON with comments.
+(add-to-list 'auto-mode-alist '("\\.env\\(?:rc\\)?\\'" . sh-mode))
+(add-to-list 'auto-mode-alist '("\\.jsonc\\'" . json-ts-mode))
 
 (provide 'init)
 ;;; init.el ends here.

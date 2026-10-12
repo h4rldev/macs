@@ -9,11 +9,13 @@
 ;;; Code:
 
 (require 'vterm)
+(require 'project)
+(require 'treemacs)
 (require 'catppuccin-theme)
 
 (setenv "COLORTERM" "truecolor")
 (setq vterm-max-scrollback 100000
-      vterm-kill-buffer-on-exit nil
+      vterm-kill-buffer-on-exit t
       vterm-term-environment-variable "xterm-256color")
 
 (with-eval-after-load 'catppuccin-theme
@@ -21,30 +23,37 @@
                       :background (catppuccin-color 'teal)))
 (setq-default cursor-type 'bar)
 
+(defun macs--vterm-root ()
+  "Root directory for terminals.
+The treemacs root when an explorer is open, else the current project root."
+  (or (ignore-errors
+        (treemacs-project->path
+         (car (treemacs-workspace->projects (treemacs-current-workspace)))))
+      (when-let* ((proj (project-current)))
+        (project-root proj))
+      default-directory))
+
+(defun macs--vterm-name (id)
+  "Buffer name for the ID terminal, scoped to the current project."
+  (format "*vterm:%s:%s*" id
+          (abbreviate-file-name (directory-file-name (macs--vterm-root)))))
+
 (defun macs--vterm (name)
-  "Return a live vterm buffer NAME, restarting it if its shell has exited."
+  "Return a vterm buffer NAME, starting a shell in it if needed."
   (require 'vterm)
   (let ((buf (get-buffer-create name)))
     (with-current-buffer buf
-      (when (and (derived-mode-p 'vterm-mode)
-                 (not (and vterm--process (process-live-p vterm--process))))
-        (setq-local vterm--process nil))
       (unless (derived-mode-p 'vterm-mode)
+        (setq default-directory (file-name-as-directory (macs--vterm-root)))
         (vterm-mode))
       (display-line-numbers-mode -1)
       (setq-local mode-line-format nil))
     buf))
 
-(defun macs--vterm-close-on-exit (buf _event)
-  "Close the side window showing BUF when its shell exits.
-Floating terminals live in child frames and are handled separately."
-  (let ((win (and buf (get-buffer-window buf))))
-    (when (and win (not (frame-parent (window-frame win))))
-      (delete-window win))))
-
-(defun macs--vterm-toggle (name side)
-  "Toggle the NAME terminal in a SIDE window, keeping its buffer alive."
-  (let* ((buf (get-buffer name))
+(defun macs--vterm-toggle (id side)
+  "Toggle the ID terminal for the current project in a SIDE window."
+  (let* ((name (macs--vterm-name id))
+         (buf (get-buffer name))
          (win (and buf (get-buffer-window buf))))
     (if win
         (delete-window win)
@@ -56,19 +65,17 @@ Floating terminals live in child frames and are handled separately."
               (window-height . 0.3))
           `((display-buffer-reuse-window display-buffer-in-side-window)
             (side . ,side)
-            (window-width . 0.4)))))
-      (with-current-buffer (get-buffer name)
-        (add-hook 'vterm-exit-functions #'macs--vterm-close-on-exit nil t)))))
+            (window-width . 0.4))))))))
 
 (defun macs-vterm-vertical ()
   "Toggle a terminal on the right, keeping its session."
   (interactive)
-  (macs--vterm-toggle "*vterm:right*" 'right))
+  (macs--vterm-toggle "right" 'right))
 
 (defun macs-vterm-horizontal ()
   "Toggle a terminal below, keeping its session."
   (interactive)
-  (macs--vterm-toggle "*vterm:below*" 'below))
+  (macs--vterm-toggle "below" 'below))
 
 (defun macs--center-frame (frame)
   "Center child FRAME over its parent frame."
@@ -101,7 +108,7 @@ Floating terminals live in child frames and are handled separately."
         (select-frame-set-input-focus (frame-parent macs-vterm-float-frame))
         (delete-frame macs-vterm-float-frame)
         (setq macs-vterm-float-frame nil))
-    (let* ((buf (macs--vterm "*vterm:float*"))
+    (let* ((buf (macs--vterm (macs--vterm-name "float")))
            (win (display-buffer
                  buf
                  '((display-buffer-reuse-window display-buffer-in-child-frame)
@@ -117,14 +124,29 @@ Floating terminals live in child frames and are handled separately."
       (setq macs-vterm-float-frame frame)
       (set-frame-parameter frame 'macs-float t)
       (macs--center-frame frame)
-      (with-current-buffer buf
-        (add-hook 'vterm-exit-functions
-                  (lambda (_buf _event)
-                    (when (frame-live-p frame) (delete-frame frame))
-                    (setq macs-vterm-float-frame nil))
-                  nil t))
       (select-frame-set-input-focus frame))))
 
+(defun macs-vterm-kill-ring-save ()
+  "Copy the active region; with none, enter `vterm-copy-mode' to select."
+  (interactive)
+  (if (use-region-p)
+      (kill-ring-save (region-beginning) (region-end))
+    (vterm-copy-mode 1)
+    (message "Copy mode: select text, then M-w")))
+
+(keymap-set vterm-mode-map "M-w" #'macs-vterm-kill-ring-save)
+
+(defun macs--vterm-exited (buf _event)
+  "Close the window (or child frame) showing BUF when its shell exits."
+  (when-let* ((win (and (buffer-live-p buf) (get-buffer-window buf t))))
+    (let ((frame (window-frame win)))
+      (if (frame-parameter frame 'macs-float)
+          (progn
+            (setq macs-vterm-float-frame nil)
+            (delete-frame frame))
+        (delete-window win)))))
+
+(add-hook 'vterm-exit-functions #'macs--vterm-exited)
 
 (define-key global-map (kbd "C-c t v") #'macs-vterm-vertical)
 (define-key global-map (kbd "C-c t h") #'macs-vterm-horizontal)

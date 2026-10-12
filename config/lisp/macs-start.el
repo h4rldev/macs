@@ -118,6 +118,7 @@ Set this to your projects directory, e.g. (list \"~/work\")."
 
 (defun macs-start--redraw ()
   "Refreshes the macs dashboard, recentering and refetching new projects."
+  (interactive)
   (let* ((inhibit-read-only t)
          (all (macs-start--ranked-projects))
          (projects (if macs-start-show-all
@@ -128,7 +129,7 @@ Set this to your projects directory, e.g. (list \"~/work\")."
                       (length projects)
                       (if macs-start-show-all "" "recent ")
                       (if (= (length projects) 1) "" "s")))
-         (hint "r scan   a all/recent   g refresh   q quit")
+         (hint "r scan   a all/recent   g refresh   d open dir   q quit")
          (row-widths (mapcar (lambda (r) (+ (length (nth 0 r)) 2 (length (nth 1 r))))
                              rows))
          (banner-width (apply #'max (mapcar #'length macs-start-banner)))
@@ -194,9 +195,19 @@ Set this to your projects directory, e.g. (list \"~/work\")."
   (setq-local display-line-numbers nil)
   (display-line-numbers-mode -1))
 
+(defun macs-open-directory ()
+  "Prompt for a directory, remember it as a project, and open it."
+  (interactive)
+  (let ((dir (read-directory-name "Open directory: " nil nil t)))
+    (when (file-directory-p dir)
+      (when-let* ((proj (project-current nil dir)))
+        (project-remember-project proj))
+      (macs-open-project dir))))
+
 (keymap-set macs-start-mode-map "r" #'macs-start-scan)
 (keymap-set macs-start-mode-map "a" #'macs-start-toggle-all)
 (keymap-set macs-start-mode-map "g" #'macs-start--redraw)
+(keymap-set macs-start-mode-map "d" #'macs-open-directory)
 
 (defun macs-start ()
   "Populate and return the macs start buffer."

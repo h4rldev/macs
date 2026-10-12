@@ -8,6 +8,13 @@
 (require 'treesit)
 (require 'treesit-auto)
 
+;; Emacs' built-in markdown-ts-mode is experimental and needs a second
+;; grammar (`markdown-inline') that treesit-auto does not manage; use the
+;; mature `markdown-mode' instead, so drop markdown from treesit-auto.
+(setq treesit-auto-recipe-list
+      (seq-remove (lambda (r) (eq (treesit-auto-recipe-lang r) 'markdown))
+                  treesit-auto-recipe-list))
+
 ;; treesit-auto owns mode selection: a file opens in its base mode, is
 ;; remapped to the *-ts-mode once the grammar is ready, and prompts to
 ;; install the grammar when it is missing.
@@ -41,7 +48,11 @@
 (with-eval-after-load 'glsl-ts-mode
   (add-hook 'glsl-ts-mode-hook (lambda () (setq-local mode-name "GLSL"))))
 
+;; kdl-mode auto-installs a grammar; pin v2.0.0 so we get KDL v2, not v1.
+(add-to-list 'treesit-language-source-alist
+             '(kdl "https://github.com/tree-sitter-grammars/tree-sitter-kdl" "v2.0.0" "src"))
 
+(add-to-list 'auto-mode-alist '("\\.\\(csproj\\|props\\|targets\\)\\'" . nxml-mode))
 ;; erlang-ts' `builtin' and `guards' features hand OTP's Emacs-syntax regexps
 ;; to tree-sitter's :match predicate; libtree-sitter 0.26 segfaults on them
 ;; during font-lock. Drop just those two features.

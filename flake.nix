@@ -145,7 +145,11 @@
         macs-epkgs.treesit-auto
         macs-epkgs.erlang-ts
         macs-epkgs.web-mode
-
+        macs-epkgs.just-mode
+        macs-epkgs.zig-mode
+        macs-epkgs.kdl-mode
+        macs-epkgs.markdown-mode
+        
         pkgs.zoxide
         pkgs.ripgrep
         pkgs.fd
@@ -268,6 +272,7 @@
       default = {
         type = "app";
         program = "${self.packages.${system}.default}/bin/emacs";
+        meta.description = "Run macs, a minimal custom Emacs";
       };
     });
   };
