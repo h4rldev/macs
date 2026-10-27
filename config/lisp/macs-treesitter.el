@@ -7,6 +7,7 @@
 
 (require 'treesit)
 (require 'treesit-auto)
+(require 'kdl-mode)
 
 ;; Emacs' built-in markdown-ts-mode is experimental and needs a second
 ;; grammar (`markdown-inline') that treesit-auto does not manage; use the
@@ -51,6 +52,24 @@
 ;; kdl-mode auto-installs a grammar; pin v2.0.0 so we get KDL v2, not v1.
 (add-to-list 'treesit-language-source-alist
              '(kdl "https://github.com/tree-sitter-grammars/tree-sitter-kdl" "v2.0.0" "src"))
+
+;; kdl-mode's `node_field_comment' rule is malformed; its nested query
+;; hangs Emacs's query compiler.  The flat patterns match the same nodes.
+(with-eval-after-load 'kdl-mode
+  (setq kdl-treesit-font-locks
+        (mapcar
+         (lambda (setting)
+           (let* ((query (treesit-font-lock-setting-query setting))
+                  (source (if (treesit-compiled-query-p query)
+                              (treesit-query-source query)
+                            query)))
+             (when (string-match-p "node_field_comment" (prin1-to-string source))
+               (setcar setting
+                       '((node_comment) @font-lock-comment-face
+                         (node_field_comment) @font-lock-comment-face
+                         (node_children_comment) @font-lock-comment-face))))
+           setting)
+         kdl-treesit-font-locks)))
 
 (add-to-list 'auto-mode-alist '("\\.\\(csproj\\|props\\|targets\\)\\'" . nxml-mode))
 ;; erlang-ts' `builtin' and `guards' features hand OTP's Emacs-syntax regexps

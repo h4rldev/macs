@@ -22,22 +22,49 @@
           (if close 'close 'field))))))
 
 (defun macs-erlang--record-indent (orig)
-  "Indent record fields by `erlang-indent-level' based on ORIG;
+  "Indent list/map members and record fields based on ORIG;
 delegate otherwise."
-  (let ((ctx (and (not (save-excursion
-                         (beginning-of-line)
-                         (looking-at "[ \t]*-record\\b")))
-                  (macs-erlang--record-context))))
-    (cond
-     ((eq ctx 'close)
-      (let ((old (current-indentation)))
-        (indent-line-to 0)
-        (- old)))
-     ((eq ctx 'field)
-      (let ((old (current-indentation)))
-        (indent-line-to erlang-indent-level)
-        (- erlang-indent-level old)))
-     (t (funcall orig)))))
+  (let ((container (macs-erlang--container-context)))
+    (if container
+        (let* ((old (current-indentation))
+               (new (if (cdr container)
+                        (car container)
+                      (+ (car container) erlang-indent-level))))
+          (indent-line-to new)
+          (- new old))
+      (let ((ctx (and (not (save-excursion
+                             (beginning-of-line)
+                             (looking-at "[ \t]*-record\\b")))
+                      (macs-erlang--record-context))))
+        (cond
+         ((eq ctx 'close)
+          (let ((old (current-indentation)))
+            (indent-line-to 0)
+            (- old)))
+         ((eq ctx 'field)
+          (let ((old (current-indentation)))
+            (indent-line-to erlang-indent-level)
+            (- erlang-indent-level old)))
+         (t (funcall orig)))))))
+
+(defun macs-erlang--container-context ()
+  "Return (INDENT . CLOSE) for the innermost enclosing list or map.
+INDENT is the indentation of the line holding the opening delimiter.
+CLOSE is non-nil when the current line starts with the matching closer."
+  (save-excursion
+    (beginning-of-line)
+    (skip-chars-forward " \t")
+    (let ((close (char-after))
+          (open (nth 1 (syntax-ppss))))
+      (when (and open
+                 (let ((ch (char-after open)))
+                   (or (eq ch ?\[)
+                       (and (eq ch ?\{)
+                            (eq (char-before open) ?#)))))
+        (cons (save-excursion
+                (goto-char open)
+                (current-indentation))
+              (eq close (if (eq (char-after open) ?\[) ?\] ?\})))))))
 
 ;; erlang-indent-region has its own parser and bypasses `erlang-indent-line'.
 ;; Nil falls back to the generic line-by-line indenter, so the advice applies.
